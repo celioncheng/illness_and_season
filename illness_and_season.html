@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>季節與健康挑戰賽</title>
+    <style>
+        :root { --p: #0984e3; --s: #00b894; --a: #fdcb6e; --bg: #f0f3f7; }
+        body { font-family: 'Microsoft JhengHei', Arial, sans-serif; background: var(--bg); padding: 20px; color: #2d3436; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: var(--p); margin-bottom: 10px; }
+        
+        /* 操作提醒區塊 */
+        .refresh-notice {
+            background: #e3f2fd;
+            border: 2px dashed #2196f3;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            color: #0d47a1;
+        }
+        .refresh-notice b { color: #1565c0; font-size: 1.1rem; }
+
+        .section-header { 
+            background: #e8f4fd; padding: 12px 20px; border-radius: 10px; 
+            margin: 30px 0 15px; font-weight: bold; font-size: 1.25rem; 
+            border-left: 8px solid var(--p); color: #0d47a1;
+        }
+        .question-card { 
+            background: #fff; border: 2px solid #f0f0f0; padding: 20px; 
+            margin-bottom: 15px; border-radius: 15px;
+        }
+        .audio-btn { 
+            background: var(--a); border: none; color: #634d00; padding: 10px 20px; 
+            border-radius: 50px; cursor: pointer; font-weight: bold; margin-bottom: 10px;
+        }
+        .hint-display { 
+            font-size: 1.4rem; text-align: center; margin: 15px 0; 
+            padding: 15px; background: #fffde7; border-radius: 10px; color: #d35400; font-weight: bold;
+            border: 1px dashed #f39c12;
+        }
+        .options button { 
+            display: block; width: 100%; text-align: left; margin: 8px 0; padding: 14px; 
+            border: 2px solid #eee; border-radius: 12px; background: white; cursor: pointer; font-size: 1.1rem;
+        }
+        .options button:hover { background: #e3f2fd; border-color: var(--p); }
+        .options button.selected { background: #bbdefb; border-color: var(--p); font-weight: bold; }
+        .fill-container { display: flex; align-items: center; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .fill-input { 
+            width: 35px; border: none; border-bottom: 3px solid var(--p); 
+            font-size: 1.8rem; text-align: center; margin: 0 5px; background: #fffde7; outline: none;
+        }
+        #submit-btn { 
+            width: 100%; padding: 20px; background: var(--s); color: white; 
+            border: none; border-radius: 15px; font-size: 1.5rem; cursor: pointer; font-weight: bold; margin-top: 30px;
+        }
+        .feedback { font-weight: bold; margin-top: 10px; display: none; }
+        #result-area { display: none; text-align: center; margin-top: 25px; padding: 25px; border-radius: 15px; background: #fff9db; border: 2px solid #ffd600; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🌱 英文單字挑戰：季節與健康 🌱</h1>
+    
+    <div class="refresh-notice">
+        💡 <b>想練習新題目嗎？</b><br>
+        手機使用者：將畫面<b>「往下拉」</b>放開即可刷新。<br>
+        電腦使用者：點擊瀏覽器<b>「重新整理」</b>按鈕。
+    </div>
+
+    <div id="quiz-content">正在準備題目中...</div>
+
+    <button id="submit-btn" onclick="calculateScore()">交卷，看分數！</button>
+    <div id="result-area">
+        <h2 id="score-text"></h2>
+        <button onclick="location.reload()" style="padding:12px 24px; cursor:pointer; background:var(--p); color:white; border:none; border-radius:8px;">更換題目重新測驗</button>
+    </div>
+</div>
+
+<script>
+    const wordBank = [
+        { en: "spring", cn: "春天", desc: "【花朵盛開，小草發芽】" },
+        { en: "summer", cn: "夏天", desc: "【大太陽，要去海邊玩水】" },
+        { en: "fall", cn: "秋天", desc: "【葉子變黃，掉在地上】" },
+        { en: "winter", cn: "冬天", desc: "【天氣好冷，要穿厚大衣】" },
+        { en: "weather", cn: "天氣", desc: "【有晴天、雨天和雲】" },
+        { en: "season", cn: "季節", desc: "【一年有春、夏、秋、冬四個...】" },
+        { en: "fever", cn: "發燒", desc: "【額頭燙燙的，身體很不舒服】" },
+        { en: "sore throat", cn: "喉嚨痛", desc: "【喉嚨紅紅的，吞口水會痛】" },
+        { en: "runny nose", cn: "流鼻水", desc: "【鼻子癢癢，一直拿衛生紙擦鼻涕】" },
+        { en: "headache", cn: "頭痛", desc: "【頭暈暈痛痛，手抱著頭】" },
+        { en: "stomachache", cn: "肚子痛", desc: "【肚子不舒服，手摀著肚子】" },
+        { en: "toothache", cn: "牙痛", desc: "【牙齒蛀牙了，臉頰腫起來】" },
+        { en: "sick", cn: "生病", desc: "【身體不健康，躺在床上休息】" },
+        { en: "cold", cn: "感冒", desc: "【咳嗽、流鼻涕，不舒服】" }
+    ];
+
+    function speak(t) {
+        const m = new SpeechSynthesisUtterance(t);
+        m.lang = 'en-US';
+        speechSynthesis.speak(m);
+    }
+
+    function startQuiz() {
+        const container = document.getElementById('quiz-content');
+        container.innerHTML = "";
+        const shuffled = [...wordBank].sort(() => 0.5 - Math.random()).slice(0, 12);
+        
+        appendHeader(container, "第一部分：👂 聽音選中文 (4 題)");
+        for(let i=0; i<4; i++) renderChoice(container, shuffled[i], i, 'listening');
+
+        appendHeader(container, "第二部分：🖼️ 看提示選英文 (4 題)");
+        for(let i=4; i<8; i++) renderChoice(container, shuffled[i], i, 'picture');
+
+        appendHeader(container, "第三部分：✍️ 聽音拼拼看 (4 題)");
+        for(let i=8; i<12; i++) renderSpelling(container, shuffled[i], i);
+    }
+
+    function appendHeader(c, text) {
+        const h = document.createElement('div');
+        h.className = 'section-header';
+        h.innerText = text;
+        c.appendChild(h);
+    }
+
+    function renderChoice(c, item, idx, type) {
+        const card = document.createElement('div');
+        card.className = 'question-card';
+        const isList = (type === 'listening');
+        card.innerHTML = `
+            <div><b>第 ${idx+1} 題</b></div>
+            ${isList ? `<button class="audio-btn" onclick="speak('${item.en}')">🔊 點我聽發音</button>` : `<div class="hint-display">${item.desc}</div>`}
+            <p>${isList ? '這單字的意思是？' : '提示對應哪個英文單字？'}</p>
+            <div id="opts${idx}" class="options"></div>
+            <p id="f${idx}" class="feedback"></p>
+        `;
+        card.setAttribute('data-ans', isList ? item.cn : item.en);
+        c.appendChild(card);
+        
+        let opts = [isList ? item.cn : item.en];
+        while(opts.length < 3) {
+            let r = wordBank[Math.floor(Math.random()*wordBank.length)];
+            let val = isList ? r.cn : r.en;
+            if(!opts.includes(val)) opts.push(val);
+        }
+        opts.sort(() => 0.5 - Math.random()).forEach(o => {
+            const b = document.createElement('button');
+            b.innerText = o;
+            b.onclick = function() {
+                Array.from(b.parentElement.children).forEach(x => x.classList.remove('selected'));
+                b.classList.add('selected');
+                b.parentElement.setAttribute('data-sel', o);
+            };
+            document.getElementById('opts'+idx).appendChild(b);
+        });
+    }
+
+    function renderSpelling(c, item, idx) {
+        const card = document.createElement('div');
+        card.className = 'question-card';
+        let word = item.en;
+        let html = '';
+        
+        for(let i=0; i<word.length; i++) {
+            if(word[i] === ' ') {
+                html += '<span style="margin: 0 10px;"> </span>';
+            } else if (i === 0 || (i === word.length - 1 && word.length > 3)) {
+                html += `<span>${word[i]}</span>`;
+            } else {
+                html += `<input type="text" class="fill-input q${idx}" data-idx="${i}" maxlength="1" oninput="if(this.value) focusNext(this, ${idx})">`;
+            }
+        }
+
+        card.innerHTML = `
+            <div><b>第 ${idx+1} 題</b></div>
+            <button class="audio-btn" onclick="speak('${item.en}')">🔊 聽聽看怎麼拼</button>
+            <p>提示：${item.cn}</p>
+            <div class="fill-container">${html}</div>
+            <p id="f${idx}" class="feedback"></p>
+        `;
+        card.setAttribute('data-word', item.en);
+        c.appendChild(card);
+    }
+
+    function focusNext(el, qIdx) {
+        const inputs = document.querySelectorAll('.q'+qIdx);
+        for(let i=0; i<inputs.length; i++){
+            if(inputs[i] === el && inputs[i+1]) {
+                inputs[i+1].focus();
+                break;
+            }
+        }
+    }
+
+    function calculateScore() {
+        let s = 0;
+        const cards = document.querySelectorAll('.question-card');
+        cards.forEach((card, i) => {
+            const f = document.getElementById('f'+i);
+            f.style.display = "block";
+            if(card.hasAttribute('data-word')) {
+                const ans = card.getAttribute('data-word').toLowerCase();
+                const inputs = card.querySelectorAll('.fill-input');
+                let userArr = card.getAttribute('data-word').split('');
+                inputs.forEach(inp => userArr[inp.getAttribute('data-idx')] = inp.value || '_');
+                if(userArr.join('').toLowerCase() === ans) { s++; f.innerText = "✅ 答對了！"; f.style.color="green"; }
+                else { f.innerText = "❌ 正解是: " + ans; f.style.color="red"; }
+            } else {
+                const optsDiv = card.querySelector('.options');
+                const sel = optsDiv.getAttribute('data-sel');
+                if(sel === card.getAttribute('data-ans')) { s++; f.innerText = "✅ 答對了！"; f.style.color="green"; }
+                else { f.innerText = "❌ 正解是: " + card.getAttribute('data-ans'); f.style.color="red"; }
+            }
+        });
+        document.getElementById('result-area').style.display = "block";
+        document.getElementById('score-text').innerText = "測驗完成！得分：" + s + " / 12";
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    window.addEventListener('load', startQuiz);
+</script>
+</body>
+</html>
